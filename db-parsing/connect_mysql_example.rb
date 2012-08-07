@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-require 'connect_mysql'
+require 'lib/connect_mysql'
 
 test = Connect_mysql.new('chuya', '0514')
 #puts "host : " + test.host
