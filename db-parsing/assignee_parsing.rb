@@ -12,7 +12,7 @@ patentproject = mysql.db('patentproject2012')
 #output file
 logfile = File.open('db-parsing/log/assignee_2009.log','w+')
 
-patent_2009 = mypaper.query("select Patent_id, Assignee from `content_2009` ")
+patent_2009 = mypaper.query("SELECT Patent_id, Assignee FROM `content_2009` ")
 
 p_more_assignee = []
 max_assignee = 0
@@ -31,7 +31,7 @@ patent_2009.each do |p|
     logfile.write("\npatent_id = #{patent_id}\n")
     logfile.write("    |result = without assignee\n")
     patentproject.query("INSERT INTO assignee (Patent_id, Assignee, Location)
-                         VALUES ('#{patent_id}', '#{assignee}', '#{location}')    " )
+                         VALUES ('#{patent_id}', NULL, NULL) ")
   else
     assignee_str = p['Assignee'].strip().split(/([A-Z]{2}\)|\([A-Z]{2}\)|\s*unknown\))/)
     #    location_index = assignee_str.index(/\(([a-zA-Z]|\s)*,\s[A-Z]*\)/)
