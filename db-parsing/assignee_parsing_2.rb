@@ -14,10 +14,12 @@ logfile = File.open('db-parsing/log/assignee_2009.log','w+')
 
 patent_2009 = mypaper.query("SELECT Patent_id, Assignee FROM `content_2009` LIMIT 0,1000")
 
-correct_assignee = []
-incorrect_assignee = []
-without_assignee = []
+country_code = []
+patentproject.query("SELECT Code FROM `country_code`").to_a.map {|c| country_code.push(c['Code'])}
+code_re = Regexp.new(country_code.join("|"))
 
+correct_assignee, incorrect_assignee, without_assignee = [], [], []
+  
 patent_2009.each do |p|
   patent_id = p['Patent_id']
   assignee = ""
@@ -25,13 +27,13 @@ patent_2009.each do |p|
   if p['Assignee'].nil?
     without_assignee.push(p['Patent_id'])
     s = sprintf("\npatent_id = #{patent_id}\n"+
-    " "*4+"|result = without assignee\n")
+                " "*4+"|result = without assignee\n")
     puts s
     logfile.write(s)
     #    patentproject.query("INSERT INTO assignee (Patent_id, Assignee, Location)
     #                         VALUES ('#{patent_id}', NULL, NULL) ")
   else
-    assignee_str = p['Assignee'].strip().split(/(\([A-Z].*?,\s{2}[A-Z]{2}\)|\([A-Z].*?,\s{2}unknown\)|\([A-Z]{2}\))/)
+    assignee_str = p['Assignee'].strip().split(/(\(#{code_re}\)|\s{2}#{code_re}\)|\s{2}unknown\))/)
     s = sprintf("\npatent_id = #{patent_id}\n"+
                 " "*4+"|result = #{assignee_str.count}\n"+
                 " "*8+"|origin = #{p['Assignee'].strip()}\n"+
