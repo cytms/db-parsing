@@ -8,7 +8,7 @@ mysql = Connect_mysql.new('chuya', '0514')
 #input db
 patentproject = mysql.db('patentproject2012')
 
-assignee = patentproject.query("select Patent_id, Assignee from `Assignee` limit 0,10 ")
-assignee.each do |a|
-  puts a['Assignee']
+assignee = patentproject.query("SELECT Patent_id, Assignee FROM assignee WHERE Patent_id = 123")
+if assignee.to_a.count == 0
+  puts "there is no result"
 end
