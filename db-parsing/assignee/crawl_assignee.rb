@@ -12,23 +12,36 @@ mysql = Connect_mysql.new('chuya', '0514')
 mypaper = mysql.db('mypaper') #input db
 patentproject = mysql.db('patentproject2012') #output db
 
-logfile_assignee = File.open('db-parsing/assignee/log/crawl_assignee_2009.log','w+') #output file
-logfile_assignee.write("Crawling Assignee from USPTO -- 2009\n")
+#prompt year and limit
+print "Input year:"
+query_year = gets.chomp.strip
+print "Input LIMIT:"
+query_limit = gets.chomp.strip
 
-logfile_without = File.open('db-parsing/assignee/log/crawl_without_assignee_2009.log','w+') #output file
-logfile_without.write("Without Assignee or Error from USPTO -- 2009\n")
+logfile_assignee = File.open('db-parsing/assignee/log/crawl_assignee_#{query_year}_#{query_limit}.log','w+') #output file
+logfile_assignee.write("Crawling Assignee from USPTO -- #{query_year}\n")
 
-patent_2009 = mypaper.query("SELECT Patent_id FROM content_2009 LIMIT 161,100") #fetch patent id
+logfile_without = File.open('db-parsing/assignee/log/crawl_without_assignee_#{query_year}_#{query_limit}.log','w+') #output file
+logfile_without.write("Without Assignee or Error from USPTO -- #{query_year}\n")
+
+patent_2009 = mypaper.query("SELECT Patent_id FROM content_#{query_year} ORDER BY Patent_id ASC #{query_limit}") #fetch patent id
 browser = Watir::Browser.new :ff #open firefox
 browser.goto 'http://patft.uspto.gov/netahtml/PTO/srchnum.htm'
 
 with_assignee, without_assignee, page_error = [], [], []
   
-auto_index = 1 
+auto_index = query_limit[5..-1].split(',')[0].to_i + 1
 patent_2009.each do |p|
   browser.text_field(:name => 'TERM1').set p['Patent_id']
   browser.button(:value => 'Search').click
-  Watir::Wait.until { browser.title.include? 'United States Patent:' }
+  
+  begin
+    Watir::Wait.until { browser.title.include? 'United States Patent:' }
+  rescue Watir::Wait::TimeoutError => e
+    puts e.to_s
+    sleep(1)   
+    retry
+  end
 
   page_title = browser.title
   #check patent id and web page title
@@ -52,7 +65,7 @@ patent_2009.each do |p|
       if assignee.count == assignee_with_location.count  #double check   
         assignee_with_location.each do |al|  #location = assignee_with_location - assignee
           index = assignee_with_location.index(al)
-          location.push(al.gsub(/#{assignee[index]}/, '').strip)
+          location.push(al[assignee[index].length..-1].strip)
         end
         
         (0..assignee.count-1).each do |i|
