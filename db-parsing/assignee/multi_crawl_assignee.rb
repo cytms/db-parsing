@@ -71,9 +71,9 @@ def crawl(query_year, query_start, query_num)
             modify_assignee = assignee[i].gsub(/'/, "''")
             modify_location = location[i].gsub(/'/, "''")
             begin
-              patentproject.query("INSERT INTO test_assignee (Patent_id, Assignee, Location)
+              patentproject.query("INSERT INTO test_assignee_2008 (Patent_id, Assignee, Location)
                                    VALUES ('#{pid}', '#{modify_assignee}', '#{modify_location}') ")
-              q = patentproject.query("SELECT Patent_id FROM test_assignee 
+              q = patentproject.query("SELECT Patent_id FROM test_assignee_2008 
                                        WHERE Patent_id = '#{pid}' AND Assignee = '#{modify_assignee}'AND Location = '#{modify_location}' ")
               if q.to_a.count == 0
                 raise "Insert Failure"
@@ -82,7 +82,9 @@ def crawl(query_year, query_start, query_num)
               s = "Index:#{auto_index}  =>  Patent_id:#{p['Patent_id']}  =>  Exception:#{e.to_s}\n"
               puts s
               logfile_without.write(s)
-              retry
+              if e.to_s == "Insert Failure"
+                retry
+              end
             end
           end
 
@@ -123,7 +125,7 @@ puts "process start\n"
 start_time = Time.now
   
 (0..3).each do |i|
-  thread_arr[i] = Thread.new('2008', i*250, 250) do |year, start, count|
+  thread_arr[i] = Thread.new('2008', i*1250, 1250) do |year, start, count|
     crawl(year, start, count)
   end
 end
