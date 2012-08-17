@@ -3,11 +3,11 @@
 
 require 'nokogiri'
 require 'open-uri'
-require 'lib/connect_mysql'
+require_relative  '../lib/connect_mysql'
 
 @root_url = "http://patft.uspto.gov"
 @mysql = Connect_mysql.new('chuya', '0514')
-@mypaper = @mysql.db('mypaper') #input db
+@new_patent = @mysql.db('new_patent') #input db
 
 
 def get_start_page(year)
@@ -44,7 +44,7 @@ def crawl_patent(page)
     url = @root_url+td[3].css('a')[0]['href']
     puts "index:#{index}\npatent_id:#{patent_id}\ntitle:#{title}\nurl:#{url}\n"
     
-    @mypaper.query("INSERT INTO content_2010 (`Index`, `Patent_id`, `Title`)
+    @new_patent.query("INSERT INTO content_#{@year} (`Index`, `Patent_id`, `Title`)
                     VALUES ('#{index}', '#{patent_id}', '#{title}') ")
     puts "--------------------------------------------------"
   end
@@ -65,8 +65,8 @@ end
 
 puts "process start\n"
 start_time = Time.now
-year = "2010"
-page = get_start_page(year)
+@year = ARGV[0]
+page = get_start_page(@year)
 next_url = get_next_url(page)
 
 while !next_url.nil?
@@ -81,4 +81,4 @@ while !next_url.nil?
 end
 
 puts "Process Duration: #{Time.now - start_time} seconds\n"
-puts "threads end"
+puts "Process end"
