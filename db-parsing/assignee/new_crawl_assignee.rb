@@ -50,6 +50,7 @@ end
 
 def crawl(query_year, query_start, query_num)
   year, start, num = query_year, query_start, query_num
+  with_assignee, without_assignee, page_error = [], [], []
   limit = "LIMIT #{start}, #{num}"
   mysql = Connect_mysql.new('chuya', '0514')
   patentproject = mysql.db('patentproject2012') #output db
@@ -61,9 +62,11 @@ def crawl(query_year, query_start, query_num)
 
   auto_index = start.to_i+1
   patent.each do |p|
+    sleep(1)
     assignee_data = get_assignee(p['Patent_id'])
     pid = assignee_data['Patent_id']
     if assignee_data['result'] == 1
+      with_assignee.push(pid)
       assignee_data['data'].each do |d|
         modify_assignee = d['Assignee'].gsub(/'/, "''")
         modify_location = d['Location'].gsub(/'/, "''")
@@ -77,6 +80,7 @@ def crawl(query_year, query_start, query_num)
           end
         rescue => e
           s = "Index:#{auto_index}  =>  Patent_id:#{p['Patent_id']}  =>  Exception:#{e.to_s}\n"
+          sleep(1)
           puts s
           logfile_assignee.write(s)
           if e.to_s == "Insert Failure"
@@ -89,17 +93,26 @@ def crawl(query_year, query_start, query_num)
       end
 
     elsif assignee_data['result'] == 0
+      without_assignee.push(pid)
       s = "Index:#{auto_index}  =>  Patent_id:#{pid}  =>  without assignee\n"
       puts s
       logfile_assignee.write(s)
 
     else
+      page_error.push(pid)
       s = "Index:#{auto_index}  =>  Patent_id:#{pid}  =>  page title does not equal to patent id\n"
       puts s
       logfile_without.write(s)
     end
     auto_index += 1
   end
+  s = "with_assignee = #{with_assignee.count}\n"+
+      "without_assignee = #{without_assignee.count}\n"+
+      "page_error = #{page_error.count}\n"+
+      "total = #{with_assignee.count+without_assignee.count+page_error.count}\n\n"+
+      "Page Error Patent_id = #{page_error}\n\n"
+  puts s
+  logfile_assignee.write(s)
 end
 
 
@@ -107,9 +120,20 @@ end
 thread_arr = []
 puts "process start\n"
 start_time = Time.now
+
+#parameter
+query_year = ARGV[0]
+query_start = ARGV[1].to_i  #start from
+query_end = ARGV[2].to_i
+query_total = query_end-(query_start-1)  #total count
+slice_num = ARGV[3].to_i #slice to 
+query_num = query_total/slice_num
+
+logfile = File.open("db-parsing/assignee/log/#{query_year}/crawl_assignee_main.log",'w+') #output log file
+logfile.write("Crawling Assignee from USPTO time \n")
   
-(0..3).each do |i|
-  thread_arr[i] = Thread.new('2008', i*1250, 1250) do |year, start, count|
+(0..slice_num-1).each do |i|
+  thread_arr[i] = Thread.new(query_year, (query_start-1) + i*query_num, query_num) do |year, start, count|
     crawl(year, start, count)
   end
 end
@@ -117,6 +141,8 @@ end
 thread_arr.each do |th|
   th.join
 end
-puts "Process Duration: #{Time.now - start_time} seconds\n"
+s = "Process Duration: #{Time.now - start_time} seconds\n"
+logfile.write(s)
+puts s
 puts "threads end"
 

@@ -7,7 +7,7 @@ require 'lib/connect_mysql'
 
 @root_url = "http://patft.uspto.gov"
 @mysql = Connect_mysql.new('chuya', '0514')
-@mypaper = mysql.db('mypaper') #input db
+@mypaper = @mysql.db('mypaper') #input db
 
 
 def get_start_page(year)
@@ -39,13 +39,13 @@ def crawl_patent(page)
   (1..tr.to_a.count-1).each do |i|
     td = tr[i].css('td')
     index = td[0].text
-    patent_id = td[1].text
-    title = td[3].text.chomp.gsub(/\'/, "''")
+    patent_id = td[1].text.gsub(/,/,"")
+    title = td[3].text.gsub(/'/, "''").gsub(/\n/, '').gsub(/\s{4}/, '').chomp
     url = @root_url+td[3].css('a')[0]['href']
-    @mypaper.query("INSERT INTO content_2010 (Index, Patent_id, Title, Url)
-                    VALUES ('#{index}', '#{patent_id}', '#{title}', '#{url}') ")
-    
     puts "index:#{index}\npatent_id:#{patent_id}\ntitle:#{title}\nurl:#{url}\n"
+    
+    @mypaper.query("INSERT INTO content_2010 (`Index`, `Patent_id`, `Title`)
+                    VALUES ('#{index}', '#{patent_id}', '#{title}') ")
     puts "--------------------------------------------------"
   end
 end
@@ -53,22 +53,32 @@ end
 def get_next_url(page)
   next_page = page.css('table')[2].css('td a')
   if next_page.to_a.count == 4
-    next_page_url = @root_url+page.css('table')[2].css('td a')[0]['href']
+    next_page_url = @root_url+next_page[0]['href'].gsub(/>/, "%3E")
     if next_page_url.match(/Page=Prev/)
       next_page_url = nil
     end
   elsif next_page.to_a.count == 5
-    next_page_url = @root_url+page.css('table')[2].css('td a')[1]['href']
+    next_page_url = @root_url+next_page[1]['href'].gsub(/>/, "%3E")
   end
   return next_page_url
 end
 
-
+puts "process start\n"
+start_time = Time.now
 year = "2010"
 page = get_start_page(year)
 next_url = get_next_url(page)
+
 while !next_url.nil?
   crawl_patent(page)
   next_url = get_next_url(page)
-  page = get_next_page(next_url)
+  puts "next_url:#{next_url}"
+  if !next_url.nil?
+    page = get_next_page(next_url)
+  else 
+    puts "END PAGE"
+  end  
 end
+
+puts "Process Duration: #{Time.now - start_time} seconds\n"
+puts "threads end"
