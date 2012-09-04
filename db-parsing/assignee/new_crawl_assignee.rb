@@ -3,7 +3,7 @@
 
 require 'nokogiri'
 require 'open-uri'
-require 'lib/connect_mysql'
+require_relative '../lib/connect_mysql'
 
 def get_patent_id(mysql, query_year, query_limit)
   mypaper = mysql.db('mypaper') #input db
@@ -55,7 +55,7 @@ def crawl(query_year, query_start, query_num)
   mysql = Connect_mysql.new('chuya', '0514')
   patentproject = mysql.db('patentproject2012') #output db
 
-  logfile_assignee = File.open("db-parsing/assignee/log/#{year}/crawl_assignee_#{year}_#{limit}.log",'w+') #output log file
+  logfile_assignee = File.open("log/#{year}/crawl_assignee_#{year}_#{limit}.log",'w+') #output log file
   logfile_assignee.write("Crawling Assignee from USPTO -- #{year} -- #{limit}\n")
 
   patent = get_patent_id(mysql, year, limit)
@@ -71,9 +71,9 @@ def crawl(query_year, query_start, query_num)
         modify_assignee = d['Assignee'].gsub(/'/, "''")
         modify_location = d['Location'].gsub(/'/, "''")
         begin
-          patentproject.query("INSERT INTO test_assignee_2007 (Patent_id, Assignee, Location)
+          patentproject.query("INSERT INTO assignee_2007 (Patent_id, Assignee, Location)
                                VALUES ('#{pid}', '#{modify_assignee}', '#{modify_location}') ")
-          q = patentproject.query("SELECT Patent_id FROM test_assignee_2007
+          q = patentproject.query("SELECT Patent_id FROM assignee_2007
                                    WHERE Patent_id = '#{pid}' AND Assignee = '#{modify_assignee}'AND Location = '#{modify_location}' ")
           if q.to_a.count == 0
             raise "Insert Failure"
@@ -129,7 +129,7 @@ query_total = query_end-(query_start-1)  #total count
 slice_num = ARGV[3].to_i #slice to 
 query_num = query_total/slice_num
 
-logfile = File.open("db-parsing/assignee/log/#{query_year}/crawl_assignee_main.log",'w+') #output log file
+logfile = File.open("log/#{query_year}/crawl_assignee_main.log",'w+') #output log file
 logfile.write("Crawling Assignee from USPTO time \n")
   
 (0..slice_num-1).each do |i|
