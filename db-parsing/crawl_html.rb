@@ -3,7 +3,6 @@
 
 require 'nokogiri'
 require 'open-uri'
-require 'parallel'
 require 'timeout'
 
 require_relative  '../lib/connect_mysql'
@@ -15,15 +14,17 @@ def get_id(year, num)
   begin
     pid = @new_patent.query("SELECT `Patent_id` FROM content_#{year} ORDER BY `Index` ASC LIMIT #{num-1}, 1").to_a[0]['Patent_id']
   rescue => e
-    puts "Get_id => Exception:#{e.to_s}"
+    puts "GET PATENT_ID, Index:#{num}  =>  Exception:#{e.to_s}"
     sleep(1)
+    @mysql = Connect_mysql.new('chuya', '0514')
+    @new_patent = @mysql.db('new_patent') #input/output db  
     retry
   end
   return pid
 end
 
 def get_html(pid)
-  time_out = 3
+  try_time = 1
   begin
     timeout(time_out) do
       page = Nokogiri::HTML(open("http://patft.uspto.gov/netacgi/nph-Parser?Sect1=PTO1&Sect2=HITOFF&d=PALL&p=1&u=%2Fnetahtml%2FPTO%2Fsrchnum.htm&r=1&f=G&l=50&s1=#{pid}.PN.&OS=PN/#{pid}&RS=PN/#{pid}", :read_timeout=>time_out-1)).to_s
@@ -31,8 +32,12 @@ def get_html(pid)
     end
   rescue => e
     puts "Patent_id:#{pid}  =>  Exception:#{e.to_s}"
-    time_out += 1
-    retry
+    if try_time > 5
+      page = "not find"
+    else
+      try_time += 1
+      retry
+    end
   end
 end
 
@@ -46,20 +51,28 @@ def update_html(year, pid, html)
   begin
     @new_patent.query("UPDATE content_#{year} SET Html = '#{mod_html}' WHERE Patent_id = '#{pid}'")
   rescue => e
-    puts "Update_html => Exception:#{e.to_s}"
+    puts "Patent_id:#{pid}  =>  Exception:#{e.to_s}"
     sleep(1)
+    @mysql = Connect_mysql.new('chuya', '0514')
+    @new_patent = @mysql.db('new_patent') #input/output db  
     retry
   end
 end
 
-#==================================================================================================
-start_time = Time.now
-puts "process start\n"
-@year = ARGV[0].to_i
-start_at = ARGV[1].to_i
-total_count = @new_patent.query("SELECT COUNT(*) FROM content_#{@year}").to_a[0]['COUNT(*)']
-puts "Year:#{@year}  =>  FROM #{start_at} TO #{total_count}"
-thread_num = 5
+def total_count(year)
+  count = @new_patent.query("SELECT COUNT(*) FROM  `content_#{year}`").to_a[0]['COUNT(*)']
+  return count.to_i
+end
+
+@year = ARGV[0]
+count = total_count(@year)
+(1..count).each do |i|
+  patent_id = get_id(@year, i)
+  puts "Now is going to get: year=>#{@year}, index=>#{i}, id=>#{patent_id}"
+  page = get_html(patent_id)
+  update_html(@year, patent_id, page)
+  puts "Update: year=>#{@year}, index=>#{i}, id=>#{patent_id}"
+end
 
 
 (start_at..total_count).each do |i|
