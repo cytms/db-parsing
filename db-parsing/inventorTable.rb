@@ -55,6 +55,7 @@ for i in 2007..2007
 			
 			
 			new_db.query('insert into `patentproject2012`.`Inventor_2007` (`Name`, `Patent_id`, `Location`) values ("'+name.to_s+'", "'+tpaper['Patent_id'].to_s+'", "'+location.to_s+'")')
+
 		end
 	end
 end
