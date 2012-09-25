@@ -8,9 +8,9 @@ new_db = connect.db('patentproject2012')
 
 for i in 2007..2007
 #for i in 1976..2009
-	tpapers = origin_db.query("select Patent_id, Inventors from `content_"+i.to_s+"`")
+	#tpapers = origin_db.query("select Patent_id, Inventors from `content_"+i.to_s+"`")
 	
-	#tpapers = origin_db.query("select Patent_id, Inventors from `content_"+i.to_s+"` where `Patent_id` = \"7297909\" limit 0,1")
+	tpapers = origin_db.query("select Patent_id, Inventors from `content_"+i.to_s+"` where `Patent_id` = \"7157363\" limit 0,1")
 	tpapers.each do |tpaper|
 		# 跑一跑突然停止的時候可以使用
 		# if temp == false
@@ -53,9 +53,12 @@ for i in 2007..2007
 				end
 			end
 			
-			
-			new_db.query('insert into `patentproject2012`.`Inventor_2007` (`Name`, `Patent_id`, `Location`) values ("'+name.to_s+'", "'+tpaper['Patent_id'].to_s+'", "'+location.to_s+'")')
+			begin
 
+				new_db.query('insert into `patentproject2012`.`Inventor_2007` (`Name`, `Patent_id`, `Location`) values ("'+name.to_s+'", "'+tpaper['Patent_id'].to_s+'", "'+location.to_s+'")')
+			rescue => e
+				next
+			end
 		end
 	end
 end
