@@ -4,29 +4,58 @@ connect = Connect_mysql.new('chuya', '0514')
 origin_db = connect.db('mypaper')
 new_db = connect.db('patentproject2012') 
 
+# temp = false
+
 for i in 2007..2007
 #for i in 1976..2009
 	tpapers = origin_db.query("select Patent_id, Inventors from `content_"+i.to_s+"`")
-	#puts "select Patent_id, Inventors from `uspto_"+i.to_s+"`"
+	
+	#tpapers = origin_db.query("select Patent_id, Inventors from `content_"+i.to_s+"` where `Patent_id` = \"7297909\" limit 0,1")
 	tpapers.each do |tpaper|
-		inventors = tpaper['Inventors'].to_s.split("),")
-		# puts temp
-		# inventors = temp[0].to_s.split(";")
-		# inventors[0] = inventors[0].to_s.sub("Inventors:", "")
-		inventors.each do |inv|
-			begin
-				name, garbage, location = inv.to_s.split(/(\(|\))/)
+		# 跑一跑突然停止的時候可以使用
+		# if temp == false
+		# 	if tpaper['Patent_id'] == "7157363"
+		# 		temp = true
+		# 	end
+		# 	next
+		# end
 
-				# if inv.include? "("
-				# 	name = inv.split("(")[0]
-				# end
-				# inv = inv.strip
-				# puts inv
-				new_db.query('insert into `patentproject2012`.`Inventor_2007` (`Name`, `Patent_id`, `Location`) values ("'+name.to_s+'", "'+tpaper['Patent_id'].to_s+'", "'+location.to_s+'")')
-			rescue => e
-				print e.message
-				retry
+		puts tpaper['Patent_id'].to_s
+		inventors = tpaper['Inventors'].to_s.split("),")
+		
+		temp = ""
+		inventors.each do |inv|
+			if inv.count("(") > 2 || (!(inv.to_s.include? "{") && inv.count("(")>1)	#若裡面有{，因為{}中會有一個()，所以一定要3個以上的(才表示location中有（）
+				temp = temp + inv
+				next
 			end
+
+			if temp != ""	#location中有()
+				inv = temp + ")," + inv
+				temp = ""
+				if inv.to_s.include? "{"	#若Name有{}且location有()	
+					tmp1, tmp2 = inv.to_s.split(";")
+					puts tmp2
+					tmp3, garbage, location1, location2, location3, location4, location5 = tmp2.to_s.split(/(\(|\))/)
+					location = location1+location2+location3+location4+location5
+					name = tmp1 + ";" + tmp3
+				else
+					name, garbage, location1, location2, location3, location4, location5 = inv.to_s.split(/(\(|\))/)
+					location = location1+location2+location3+location4+location5
+				end
+			else
+				if inv.to_s.include? "{" 
+					tmp1, tmp2 = inv.to_s.split(";")
+					tmp3, garbage, location = tmp2.to_s.split(/(\(|\))/)
+					name = tmp1 + tmp3
+				else
+					name, garbage, location = inv.to_s.split(/(\(|\))/)
+				end
+			end
+			
+			
+			new_db.query('insert into `patentproject2012`.`Inventor_2007` (`Name`, `Patent_id`, `Location`) values ("'+name.to_s+'", "'+tpaper['Patent_id'].to_s+'", "'+location.to_s+'")')
+
 		end
 	end
 end

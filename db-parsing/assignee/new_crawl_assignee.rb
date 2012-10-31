@@ -5,8 +5,9 @@ require 'nokogiri'
 require 'open-uri'
 require_relative '../lib/connect_mysql'
 
-def get_patent_id(mysql, query_year, query_limit)
+def get_patent_id(mysql, query_year, query_index)
   mypaper = mysql.db('mypaper') #input db
+  imit = "LIMIT #{query_index-1}, 1"
   patent_id = mypaper.query("SELECT Patent_id FROM content_#{query_year} ORDER BY Patent_id ASC #{query_limit}")
   return patent_id
 end
@@ -125,14 +126,11 @@ start_time = Time.now
 query_year = ARGV[0]
 query_start = ARGV[1].to_i  #start from
 query_end = ARGV[2].to_i
-query_total = query_end-(query_start-1)  #total count
-slice_num = ARGV[3].to_i #slice to 
-query_num = query_total/slice_num
 
 logfile = File.open("log/#{query_year}/crawl_assignee_main.log",'w+') #output log file
 logfile.write("Crawling Assignee from USPTO time \n")
   
-(0..slice_num-1).each do |i|
+(query_start..query_end).each do |i|
   thread_arr[i] = Thread.new(query_year, (query_start-1) + i*query_num, query_num) do |year, start, count|
     crawl(year, start, count)
   end
