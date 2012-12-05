@@ -5,14 +5,14 @@ db = Mysql2::Client.new(:host => '140.112.107.1', :username => 'chuya', :passwor
 new_patent = Mysql2::Client.new(:host => '140.112.107.1', :username => 'chuya', :password=> '0514', :database => 'new_patent')
 
 #some parameters
-last = -50		#the last queried number of entry in content_#{year} #start from -number
+last = 600		#the last queried number of entry in content_#{year} #start from -number
 number = 50 	#number of rows for each query
-year = 2006#1975		#the last processing year
+year = 2002#1975		#the last processing year
 #table = "content_"	
 tableorigin = "content_" #prefix
 
 
-while ( year < 2008 ) #should be 2010 
+while ( year < 2003 ) #should be 2010 
 	year = year + 1 #count from 1976 to 2009
 	total_entries = db.query("SELECT COUNT( `Patent_id` ) FROM `patent_#{year}`").to_a[0]['COUNT( `Patent_id` )']
 	print total_entries
@@ -35,22 +35,22 @@ while ( year < 2008 ) #should be 2010
 						Timeout::timeout(60){	
 							#get title according to `Patent_id` in `patent`	
 							source = new_patent.query("SELECT `Title` FROM `"+tableorigin+year.to_s+"` WHERE `Patent_id`='#{row['Patent_id']}'") 
-							title = row['Title'].nil? ? String.new : row['Title'].gsub(/'/, "''")
+							title = source.to_a[0]['Title'].nil? ? String.new : source.to_a[0]['Title'].gsub(/'/, "''")
 
 							#stdout
 							print row['Patent_id']
-							print title
-							puts "\n"
+							#print title
+							#puts "\n"
 
 							if title.empty?
 								title = "XXXXX"
 								####add wierd value
 							end
 
-							s = "INSERT INTO `patentproject2012`.`patent_#{year}` (`Title`) 
-										VALUES (  '#{title}'  )"
-							if db.query("SELECT * FROM `patent_#{year}` WHERE `Patent_id`='#{row['Patent_id']}'AND`Title`='#{title}'").to_a[0].nil?
+							s = "UPDATE patent_#{year} SET Title='#{title}' WHERE Patent_id='#{row['Patent_id']}'"
+							if db.query("SELECT `Title` FROM `patent_#{year}` WHERE `Patent_id`='#{row['Patent_id']}'AND`Title`='#{title}'").to_a.empty?#.nil?
 								db.query( s )
+								print "updated!\n"
 							else
 								print "title #{row['Patent_id']} #{title} exists\n"
 							end
