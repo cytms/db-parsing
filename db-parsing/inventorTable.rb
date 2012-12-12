@@ -6,11 +6,10 @@ new_db = connect.db('patentproject2012')
 
 # temp = false
 
-for i in 2007..2007
+for i in 2008..2008
 #for i in 1976..2009
-	#tpapers = origin_db.query("select Patent_id, Inventors from `content_"+i.to_s+"`")
-	
-	tpapers = origin_db.query("select Patent_id, Inventors from `content_"+i.to_s+"` where `Patent_id` = \"7157363\" limit 0,1")
+	tpapers = origin_db.query("select Patent_id, Inventors from `content_"+i.to_s+"`")
+	#tpapers = origin_db.query("select Patent_id, Inventors from `content_"+i.to_s+"` where `Patent_id` = \"7332191\" limit 0,1")
 	tpapers.each do |tpaper|
 		# 跑一跑突然停止的時候可以使用
 		# if temp == false
@@ -19,8 +18,9 @@ for i in 2007..2007
 		# 	end
 		# 	next
 		# end
-
-		puts tpaper['Patent_id'].to_s
+# Chan; Man Tai "Teddy" (Kennedy Town, HK)
+# Chu; Henry C. (Orange, CA)
+		# puts tpaper['Patent_id'].to_s
 		inventors = tpaper['Inventors'].to_s.split("),")
 		
 		temp = ""
@@ -30,12 +30,13 @@ for i in 2007..2007
 				next
 			end
 
+			inv = inv.gsub("\"", "\\\"")
 			if temp != ""	#location中有()
 				inv = temp + ")," + inv
 				temp = ""
 				if inv.to_s.include? "{"	#若Name有{}且location有()	
 					tmp1, tmp2 = inv.to_s.split(";")
-					puts tmp2
+					# puts tmp2
 					tmp3, garbage, location1, location2, location3, location4, location5 = tmp2.to_s.split(/(\(|\))/)
 					location = location1+location2+location3+location4+location5
 					name = tmp1 + ";" + tmp3
@@ -54,9 +55,10 @@ for i in 2007..2007
 			end
 			
 			begin
-
-				new_db.query('insert into `patentproject2012`.`Inventor_2007` (`Name`, `Patent_id`, `Location`) values ("'+name.to_s+'", "'+tpaper['Patent_id'].to_s+'", "'+location.to_s+'")')
+				new_db.query('insert into `patentproject2012`.`Inventor_'+i.to_s+'` (`Name`, `Patent_id`, `Location`) values ("'+name.to_s+'", "'+tpaper['Patent_id'].to_s+'", "'+location.to_s+'")')
+				
 			rescue => e
+				puts tpaper['Patent_id'].to_s
 				next
 			end
 		end
