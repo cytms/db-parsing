@@ -6,7 +6,8 @@ new_db = connect.db('patentproject2012')
 
 # temp = false
 
-for i in 2008..2008
+for i in 2000..2006
+	puts i.to_s + " start"
 #for i in 1976..2009
 	tpapers = origin_db.query("select Patent_id, Inventors from `content_"+i.to_s+"`")
 	#tpapers = origin_db.query("select Patent_id, Inventors from `content_"+i.to_s+"` where `Patent_id` = \"7332191\" limit 0,1")
