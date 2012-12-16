@@ -6,7 +6,7 @@ new_db = connect.db('patentproject2012')
 
 # temp = false
 
-for i in 2000..2006
+for i in 2006..2006
 	puts i.to_s + " start"
 #for i in 1976..2009
 	tpapers = origin_db.query("select Patent_id, Inventors from `content_"+i.to_s+"`")
@@ -56,8 +56,8 @@ for i in 2000..2006
 			end
 			
 			begin
-				new_db.query('insert into `patentproject2012`.`Inventor_'+i.to_s+'` (`Name`, `Patent_id`, `Location`) values ("'+name.to_s+'", "'+tpaper['Patent_id'].to_s+'", "'+location.to_s+'")')
-				
+				# new_db.query('insert into `patentproject2012`.`Inventor_'+i.to_s+'` (`Name`, `Patent_id`, `Location`) values ("'+name.to_s+'", "'+tpaper['Patent_id'].to_s+'", "'+location.to_s+'")')
+				new_db.query('insert into `patentproject2012`.`Inventor_2006` (`Name`, `Patent_id`, `Location`) values ("'+name.to_s+'", "'+tpaper['Patent_id'].to_s+'", "'+location.to_s+'")')
 			rescue => e
 				puts tpaper['Patent_id'].to_s
 				next
