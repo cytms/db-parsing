@@ -31,6 +31,10 @@ for i in 2006..2006
 				next
 			end
 
+
+			begin
+
+				
 			inv = inv.gsub("\"", "\\\"")
 			if temp != ""	#location中有()
 				inv = temp + ")," + inv
@@ -55,7 +59,7 @@ for i in 2006..2006
 				end
 			end
 			
-			begin
+			
 				# new_db.query('insert into `patentproject2012`.`Inventor_'+i.to_s+'` (`Name`, `Patent_id`, `Location`) values ("'+name.to_s+'", "'+tpaper['Patent_id'].to_s+'", "'+location.to_s+'")')
 				new_db.query('insert into `patentproject2012`.`Inventor_2006` (`Name`, `Patent_id`, `Location`) values ("'+name.to_s+'", "'+tpaper['Patent_id'].to_s+'", "'+location.to_s+'")')
 			rescue => e
