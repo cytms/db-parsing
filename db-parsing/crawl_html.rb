@@ -26,10 +26,11 @@ end
 def get_html(pid)
   try_time = 1
   begin
-    timeout(time_out) do
-      page = Nokogiri::HTML(open("http://patft.uspto.gov/netacgi/nph-Parser?Sect1=PTO1&Sect2=HITOFF&d=PALL&p=1&u=%2Fnetahtml%2FPTO%2Fsrchnum.htm&r=1&f=G&l=50&s1=#{pid}.PN.&OS=PN/#{pid}&RS=PN/#{pid}", :read_timeout=>time_out-1)).to_s
+    #timeout(time_out) do
+    page = Nokogiri::HTML(open("http://patft.uspto.gov/netacgi/nph-Parser?Sect1=PTO1&Sect2=HITOFF&d=PALL&p=1&u=%2Fnetahtml%2FPTO%2Fsrchnum.htm&r=1&f=G&l=50&s1=#{pid}.PN.&OS=PN/#{pid}&RS=PN/#{pid}")).to_s
+      #page = Nokogiri::HTML(open("http://patft.uspto.gov/netacgi/nph-Parser?Sect1=PTO1&Sect2=HITOFF&d=PALL&p=1&u=%2Fnetahtml%2FPTO%2Fsrchnum.htm&r=1&f=G&l=50&s1=#{pid}.PN.&OS=PN/#{pid}&RS=PN/#{pid}", :read_timeout=>time_out-1)).to_s
       return page
-    end
+    #end
   rescue => e
     puts "Patent_id:#{pid}  =>  Exception:#{e.to_s}"
     if try_time > 5
@@ -64,9 +65,10 @@ def total_count(year)
   return count.to_i
 end
 
-@year = ARGV[0]
+@year = ARGV.shift
 count = total_count(@year)
-(1..count).each do |i|
+start_at = ARGV.shift.to_i
+(start_at..count).each do |i|
   patent_id = get_id(@year, i)
   puts "Now is going to get: year=>#{@year}, index=>#{i}, id=>#{patent_id}"
   page = get_html(patent_id)
